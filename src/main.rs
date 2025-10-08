@@ -1,7 +1,9 @@
-use std::fs;
-use std::fs::File;
-use std::io::{self, BufRead, BufReader};
-use std::ptr::read;
+mod modules;
+
+use std::env;
+use modules::search::Search;
+
+// use std::env;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -9,54 +11,26 @@ fn main() {
     // Print the program path
     println!("Program path: {}", args[0]);
 
-    // Print other arguments
-    if args.len() > 1 {
-        println!("Other arguments:");
-        for arg in args.iter().skip(1) {
-            // Skip the first argument (program path)
-            println!("  {}", arg);
+    if args.len() < 2 {
+            eprintln!("Usage: {} <search_pattern> <search_path>", args[0]);
+            std::process::exit(1); // Exit with an error code
         }
-    } else {
-        println!("No additional arguments provided.");
-    }
 
-    // Get directory entries
-    get_directory_entries(&args[1]);
-}
+    let search_str: String = args.get(1)
+        .map(|s| s.trim().to_string()) // Trim whitespace from the argument
+        .filter(|s| !s.is_empty())
+        .unwrap();
 
-fn get_directory_entries(dir_path: &str) {
-    match fs::read_dir(dir_path) {
-        Ok(entries) => {
-            for entry in entries {
-                match entry {
-                    Ok(entry) => {
-                        println!("{:?}", entry.path());
-                        if (entry.file_type().unwrap().is_file()) {
-                            let result =
-                                read_and_search(entry.path().to_str().unwrap(), "some_search_term");
-                            match result {
-                                Ok(_) => println!("Search completed successfully."),
-                                Err(e) => eprintln!("Error: {}", e),
-                            }
-                        }
-                    }
-                    Err(e) => eprintln!("Error: {}", e),
-                }
-            }
-        }
-        Err(e) => eprintln!("Error: {}", e),
-    }
-}
+    let search_module = Search{ is_recursive: true, is_case_sensitive: false, whole_word: false, search_str: search_str };
 
-fn read_and_search(filename: &str, search_term: &str) -> io::Result<()> {
-    let file = File::open(filename)?;
-    let reader = BufReader::new(file);
+    // Define the default value
+    let default_path = String::from("./");
 
-    for line in reader.lines() {
-        let line_content = line?;
-        if line_content.contains(search_term) {
-            println!("Found '{}': {}", search_term, line_content);
-        }
-    }
-    Ok(())
+    // Get the second argument (index 2)
+    let search_path: String = args.get(2)
+        .map(|s| s.trim().to_string()) // Trim whitespace from the argument
+        .filter(|s| !s.is_empty()) // Filter out empty strings
+        .unwrap_or(default_path); 
+
+    search_module.sgrep(search_path);
 }
