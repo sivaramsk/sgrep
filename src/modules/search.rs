@@ -1,15 +1,16 @@
 extern crate walkdir;
 use std::fs::File;
-use std::io::{self, BufRead, BufReader, Write};
+use std::io::{self, BufRead, BufReader};
 use std::path::Path;
 use walkdir::WalkDir;
 
 #[derive(Debug)]
 pub struct Search {
     pub(crate) is_recursive: bool,
-    pub(crate) is_case_sensitive: bool,
+    pub(crate) ignore_case: bool,
     pub(crate) whole_word: bool,
     pub(crate) search_str: String,
+    pub(crate) search_path: String,
 }
 
 impl Search {
@@ -30,12 +31,10 @@ impl Search {
 
         // Iterate over the lines of the file. `lines()` returns a Result for each line.
         for line_result in reader.lines() {
-            // Handle potential IO error while reading a line.
-            let line = &self.search_str;
-
+            let line = line_result?;
             // Check if the current line contains the pattern string.
             if line.contains(&self.search_str) {
-                println!("✅ SUCCESS: Pattern found in line: \"{}\"", line.trim());
+                println!("✅ SUCCESS: Pattern found in line: \"{:#?}\"", line);
                 found = true;
                 // Break early once found to save time and resources.
                 break;
@@ -52,8 +51,8 @@ impl Search {
         Ok(())
     }
 
-    pub fn sgrep(&self, _dir: String) {
-        for entry in WalkDir::new(_dir) // Or any other starting directory
+    pub fn sgrep(&self) {
+        for entry in WalkDir::new(self.search_path.as_str()) // Or any other starting directory
             .into_iter()
             .filter_map(|e| e.ok())
         // Filter out errors
