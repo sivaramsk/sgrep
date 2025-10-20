@@ -6,6 +6,9 @@ use modules::search::Search;
 // use std::env;
 
 fn main() {
+
+    env_logger::init();
+
     let mut args: Vec<String> = env::args().collect();
 
     // Initialize the search module
@@ -18,7 +21,7 @@ fn main() {
     };
 
     if args.len() < 2 {
-        eprintln!("Usage: {} <search_string> [search_path]", args[0]);
+        println!("Usage: {} <search_string> [search_path]", args[0]);
         std::process::exit(1);
     } else if args.len() == 2 {
         search_module.search_str = args.remove(1);
