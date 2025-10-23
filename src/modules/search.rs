@@ -1,12 +1,10 @@
 extern crate walkdir;
 
-use env_logger::DEFAULT_WRITE_STYLE_ENV;
 use memmap2::MmapOptions;
 use regex::bytes::Regex;
 use std::fs::File;
 use std::io;
-// use std::io::{self, BufRead, BufReader};
-// use std::path::Path;
+use binaryornot;
 use walkdir::WalkDir;
 
 #[derive(Debug)]
@@ -21,6 +19,16 @@ pub struct Search {
 impl Search {
     fn search_2(&self, file_path: &str) -> io::Result<()> {
         let file = File::open(file_path).expect("Failed to open file");
+
+        match binaryornot::is_binary(file_path) {
+            Ok(is_binary) => {
+                if is_binary {
+                    return Ok(());
+                } 
+            }
+            Err(e) => eprintln!("Error checking file: {}", e),
+        }
+
         let mmap = unsafe {
             MmapOptions::new()
                 .map(&file)
